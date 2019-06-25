@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-# Bounce an asset to an addres you don't own
-# Reads addresses from <ip>.addresses.json in the same folder
+# Simulation of a supply-chain.  Send assets (representing goods), with manifest info
+# Reads addresses from <ip>.addresses.json in the same folder for addresses
 
 #If you need pip
 #    sudo easy_install pip
@@ -24,7 +24,7 @@ rpc_port = 18766
 #mode =  "-regtest"
 #rpc_port = 18443
 
-asset="HOTPOTATO*"
+asset="GOODS"
 extension=".addresses.json"
 
 #Set this information in your raven.conf file (in datadir, not testnet3)
@@ -196,15 +196,15 @@ def fission(master_address_list, filter):
                 print("")
         time.sleep(60)
 
-def hotpotato(master_address_list, filter):
+def ship(master_address_list, filter):
     transferred = 0
     while (True):
         assets = listmyassets(filter)
-        print("Hot Potato asset count: " + str(len(assets)))
+        print("Goods asset count: " + str(len(assets)))
         for asset, qty in assets.items():
             if not asset.endswith('!'):  #Only send if not admin token
                 address = get_others_address(master_address_list)
-                print("Transfer " + asset + " Qty:" + str(qty) + " to " + address)
+                print("Ship " + asset + " Qty:" + str(qty) + " to " + address)
                 try:
                     txid = transfer_asset(asset, qty, address)
                     print("TxId: " + txid)
@@ -225,4 +225,4 @@ if mode == "-regtest":  #If regtest then mine our own blocks
 create_address_file()
 master_list = create_master_list_of_addresses()
 #fission(master_list, "URANIUM")
-hotpotato(master_list, asset)  #Set to "*" for all.
+ship(master_list, asset)  #Set to "*" for all.
