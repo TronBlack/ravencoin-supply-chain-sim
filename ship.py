@@ -89,8 +89,8 @@ def generate_blocks(n):
     hashes = rpc_connection.generate(n)
     return(hashes)
 
-def transfer(asset, qty, address):
-    result = rpc_connection.transfer(asset, qty, address)
+def transfer(asset, qty, address, memo):
+    result = rpc_connection.transfer(asset, qty, address, memo)
     return(result)
 
 def share_my_addresses(fname):
@@ -196,20 +196,52 @@ def fission(master_address_list, filter):
                 print("")
         time.sleep(60)
 
+def get_random_carrier():
+    return("FedEx")
+
+def get_random_tracking():
+    return("Z38431527")
+
+def get_random_location():
+    return("Warsaw, Poland")
+
+def get_random_insurer():
+    return("Loyds of London")
+
+
+#Returns a JSON object
+def build_bill_of_lading(prev_bill_of_lading = None):
+    data = {}
+    data['carrier'] = get_random_carrier()
+    data['tracking'] = get_random_tracking()
+    
+    if prev_bill_of_lading is None:
+        data['insurer'] = get_random_insurer()
+        data['from'] = get_random_location()
+    else:
+        data['insurer'] = prev_bill_of_lading['insurer']
+        data['from'] = prev_bill_of_lading['to']
+
+    data['to'] = get_random_location()
+    return(data)
+
 def ship(master_address_list, filter):
     transferred = 0
-    while (True):
+    #while (True):
+    while (transferred < 1)   #Temporary to transfer one asset
         assets = listmyassets(filter)
         print("Goods asset count: " + str(len(assets)))
         for asset, qty in assets.items():
+            qty = 1 #TODO - temporary overide of qty to 1
             if not asset.endswith('!'):  #Only send if not admin token
                 address = get_others_address(master_address_list)
                 print("Ship " + asset + " Qty:" + str(qty) + " to " + address)
                 try:
-                    txid = transfer_asset(asset, qty, address)
+                    bol = build_bill_of_lading()
+                    txid = transfer_asset(asset, qty, address, json.dumps(bol))
                     print("TxId: " + txid)
                     transferred=transferred+1
-                    print("Asset transfer count: " + str(transferred))
+                    print("Shipping count: " + str(transferred))
                 except BaseException as err:# JSONRPCException:
                     print("Could not send asset " + asset + ". Possibly already sent, waiting for confirmation.")
                     print(err)
@@ -224,5 +256,4 @@ if mode == "-regtest":  #If regtest then mine our own blocks
 
 create_address_file()
 master_list = create_master_list_of_addresses()
-#fission(master_list, "URANIUM")
 ship(master_list, asset)  #Set to "*" for all.
