@@ -8,8 +8,15 @@
 #If you need tinydb
 #    sudo pip install tinydb
 
+#If you need ipfs
+#   1. Get IPFS - https://ipfs.io/
+#   2. Run the ipfs daemon
+#   3. pip install ipfsapi
+
 import subprocess
 import json
+from datetime import datetime
+import random
 from tinydb import TinyDB, Query
 from tinydb.operations import set
 import socket
@@ -24,7 +31,7 @@ rpc_port = 18766
 #mode =  "-regtest"
 #rpc_port = 18443
 
-asset="GOODS"
+asset="TRACKEDGOODS"
 extension=".addresses.json"
 
 #Set this information in your raven.conf file (in datadir, not testnet3)
@@ -74,6 +81,7 @@ rpc_connection = get_rpc_connection()
 
 def listmyassets(filter):
     result = rpc_connection.listmyassets(filter)
+    print result
     return(result) 
 
 def getaddressesbyaccount(account):
@@ -89,8 +97,8 @@ def generate_blocks(n):
     hashes = rpc_connection.generate(n)
     return(hashes)
 
-def transfer(asset, qty, address, memo):
-    result = rpc_connection.transfer(asset, qty, address, memo)
+def transfer(asset, qty, address, memo_hash='', memo_expiration=0, change_address=''):
+    result = rpc_connection.transfer(asset, qty, address, memo_hash, memo_expiration, change_address)  #This should change if we move change address to the end
     return(result)
 
 def share_my_addresses(fname):
@@ -140,9 +148,33 @@ def get_others_address(master_address_list):
     selected = random.randint(0, len(master_address_list)-1)
     return(master_address_list[selected])
 
-def transfer_asset(asset, qty, address):
-    result = transfer(asset, qty, address)
+def transfer_asset(asset, qty, address, memo=None, memo_expiration=0, change_address=''):
+    #Add the message to IPFS
+
+    memo_hash = None
+    if memo is not None:
+        memo_hash = add_memo(memo)
+
+    result = transfer(asset, qty, address, memo_hash, memo_expiration, change_address)
     return(result[0])
+
+def add_to_ipfs(json_str):
+    print("Adding to IPFS")
+    import ipfsapi
+    api = ipfsapi.connect('127.0.0.1', 5001)
+    res = api.add_str(json_str)
+    print(res)
+    print("Printed res")
+    return(res)
+
+
+#TODO Add memo to IPFS and return memo_hash 
+def add_memo(json_str):
+    #print("Adding memo to ipfs")
+    memo_hash = add_to_ipfs(json_str)
+    #print("Added memo to ipfs")
+    #print(memo_hash)
+    return memo_hash
 
 def create_address_file():
     import os
@@ -203,15 +235,27 @@ def get_random_tracking():
     return("Z38431527")
 
 def get_random_location():
-    return("Warsaw, Poland")
+    r = random.randint(1,len(shipping_addresses['addresses']))
+    return(shipping_addresses['addresses'][r])
+    #return("Warsaw, Poland")
 
 def get_random_insurer():
     return("Loyds of London")
 
+def get_time():
+    return(datetime.today().strftime('%Y-%m-%d %H:%M:%S'))
+
+def read_shipping_addresses():
+    with open('addresses.json') as json_file:  
+        s_add = json.load(json_file)
+    a_count = len(s_add['addresses'])
+    print("Num shipping addresses: " + str(a_count))
+    return(s_add)
 
 #Returns a JSON object
 def build_bill_of_lading(prev_bill_of_lading = None):
     data = {}
+    data['loaded'] = get_time()
     data['carrier'] = get_random_carrier()
     data['tracking'] = get_random_tracking()
     
@@ -228,7 +272,7 @@ def build_bill_of_lading(prev_bill_of_lading = None):
 def ship(master_address_list, filter):
     transferred = 0
     #while (True):
-    while (transferred < 1)   #Temporary to transfer one asset
+    while (transferred < 1):   #Temporary to transfer one asset
         assets = listmyassets(filter)
         print("Goods asset count: " + str(len(assets)))
         for asset, qty in assets.items():
@@ -256,4 +300,5 @@ if mode == "-regtest":  #If regtest then mine our own blocks
 
 create_address_file()
 master_list = create_master_list_of_addresses()
+shipping_addresses = read_shipping_addresses()
 ship(master_list, asset)  #Set to "*" for all.
