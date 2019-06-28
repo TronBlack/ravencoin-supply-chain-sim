@@ -229,18 +229,30 @@ def fission(master_address_list, filter):
         time.sleep(60)
 
 def get_random_carrier():
-    return("FedEx")
+    with open('carrier_list.json') as json_file:  
+        carriers = json.load(json_file)
+    a_count = len(carriers)
+    r = random.randint(0,len(carriers)-1)
+    return(carriers[r])
 
 def get_random_tracking():
-    return("Z38431527")
+    letter = chr(random.randint(65, 65+25))
+    length = random.randint(6, 24)
+    tracking = letter
+    for x in range(length):
+        tracking += str(random.randint(0,9))
+    return(tracking)
 
 def get_random_location():
-    r = random.randint(1,len(shipping_addresses['addresses']))
+    r = random.randint(0,len(shipping_addresses['addresses'])-1)
     return(shipping_addresses['addresses'][r])
-    #return("Warsaw, Poland")
+
 
 def get_random_insurer():
-    return("Loyds of London")
+    with open('insurer_list.json') as json_file:  
+        insurers = json.load(json_file)
+    r = random.randint(0,len(insurers)-1)
+    return(insurers[r])
 
 def get_time():
     return(datetime.today().strftime('%Y-%m-%d %H:%M:%S'))
@@ -248,8 +260,6 @@ def get_time():
 def read_shipping_addresses():
     with open('addresses.json') as json_file:  
         s_add = json.load(json_file)
-    a_count = len(s_add['addresses'])
-    print("Num shipping addresses: " + str(a_count))
     return(s_add)
 
 #Returns a JSON object
@@ -297,6 +307,7 @@ def ship(master_address_list, filter):
 if mode == "-regtest":  #If regtest then mine our own blocks
     import os
     os.system(cli + " " + mode + " generate 400")
+
 
 create_address_file()
 master_list = create_master_list_of_addresses()
