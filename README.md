@@ -1,6 +1,12 @@
 # ravencoin-supply-chain-sim
 A supply chain simulation to exercise memos feature on testnet.  
 
+
+## Setup:
+ ```pip3 install python-bitcoinrpc```
+ 
+
+
 ## Glossary:
 Bill of Lading (BoL) - A transferrable document which indicates goods have been loaded, and acts as a conclusive receipt.   
 

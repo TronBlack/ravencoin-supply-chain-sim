@@ -34,7 +34,7 @@ rpc_port = 18766
 asset="TRACKEDGOODS"
 extension=".addresses.json"
 
-#Set this information in your raven.conf file (in datadir, not testnet3)
+#Set this information in your raven.conf file (in datadir, not testnet6)
 rpc_user = 'rpcuser'
 rpc_pass = 'rpcpass555'
 
@@ -44,8 +44,7 @@ if os.name != "nt":
 
     def get_interface_ip(ifname):
         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        return socket.inet_ntoa(fcntl.ioctl(s.fileno(), 0x8915, struct.pack('256s',
-                                ifname[:15]))[20:24])
+        return socket.inet_ntoa(fcntl.ioctl(s.fileno(), 0x8915, struct.pack('256s', ifname[:15].encode('utf-8'))))
 
 def get_lan_ip():
     ip = socket.gethostbyname(socket.gethostname())
@@ -73,7 +72,7 @@ def get_lan_ip():
 def get_rpc_connection():
     from bitcoinrpc.authproxy import AuthServiceProxy, JSONRPCException
     connection = "http://%s:%s@127.0.0.1:%s"%(rpc_user, rpc_pass, rpc_port)
-    #print("Connection: " + connection)
+    print("Connection: " + connection)
     rpc_conn = AuthServiceProxy(connection)
     return(rpc_conn)
     
@@ -81,7 +80,7 @@ rpc_connection = get_rpc_connection()
 
 def listmyassets(filter):
     result = rpc_connection.listmyassets(filter)
-    print result
+    print (result)
     return(result) 
 
 def getaddressesbyaccount(account):
